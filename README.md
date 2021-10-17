@@ -4,10 +4,6 @@
 	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
 	<title></title>
 	<meta name="generator" content="LibreOffice 7.0.4.2 (Linux)"/>
-	<style type="text/css">
-		@page { size: 8.5in 11in; margin: 0.79in }
-		p { margin-bottom: 0.1in; line-height: 115%; background: transparent }
-	</style>
 </head>
 <body lang="en-US" link="#000080" vlink="#800000" dir="ltr"><p>---------------------------------------------------------------------------------</p>
 <p>--- provisioning nodes | deploy ssh key to all nodes</p>
