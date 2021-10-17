@@ -2,7 +2,6 @@
 <html>
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
-	<title></title>
 	<meta name="generator" content="LibreOffice 7.0.4.2 (Linux)"/>
 </head>
 <body lang="en-US" link="#000080" vlink="#800000" dir="ltr"><p>---------------------------------------------------------------------------------</p>
