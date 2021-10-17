@@ -40,7 +40,9 @@ MAIN machine with:<br/>
 skipping the RSA finger print question</p>
 <p><b>ansible-playbook deploy_keys.yml --ask-pass -i inventory</b></p>
 <p>--- skipping the fingerprint question is made by using this:
-host_key_checking = False in ansible.cfg --- clone1 clone2 ...clone5
+host_key_checking = False in ansible.cfg 
+
+	---names clone1 clone2 ...clone5
 from inventory file are hostnames which are found on MAIN machine in
 /etc/hostnames</p>
 <p>------------------------------------------------------------------</p>
