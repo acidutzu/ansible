@@ -10,3 +10,12 @@ ansible-playbook deploy_keys.yml --ask-pass -i inventory
 
 
 --- skipping the fingerprint question is made by using this: host_key_checking = False  in ansible.cfg
+--- clone1 clone2 ...clone5 from inventory file are hostnames which are found on MAIN machine in 
+/etc/hostnames
+
+example from: nano /etc/hostnames
+
+192.168.1.131		clone1
+192.168.1.132		clone2
+... ... . ...		.....
+192.168.1.135		clone5
