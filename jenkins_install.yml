@@ -1,0 +1,38 @@
+---
+- name: Install Java JDK and Jenkins Server
+  hosts: webservers
+  gather_facts: false
+  tasks:
+
+    - name: Installing Java JDK
+      apt:
+        update_cache: yes
+        name: default-jdk
+      become: yes
+
+    - name: Installing Jenkins
+      shell: | 
+        wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | apt-key add -
+        sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+        apt-get update -y
+        apt-get install jenkins -y
+      become: yes
+    
+    - name: Start Jenkins
+      shell: /etc/init.d/jenkins start
+      become: yes
+    
+    - name: Wait for file /var/lib/jenkins/secrets/initialAdminPassword to exist before continuing
+      wait_for:
+       path: /var/lib/jenkins/secrets/initialAdminPassword
+      become: yes 
+
+
+    - name: Get Jenkins first time connect password
+      shell: "cat /var/lib/jenkins/secrets/initialAdminPassword"
+      register: first_time_passwd
+      become: yes  
+    
+    - name : Show Jenkins first time admin passwd
+      debug: 
+       msg: "Jenkins first time admin passwd is {{first_time_passwd.stdout}}"

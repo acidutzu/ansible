@@ -1,6 +1,6 @@
 ---
-- name: install docker
-  hosts: all
+- name: install docker|dockerc-compose|docker hello_world|ctop
+  hosts: webservers
   become: yes
   vars:
     CTOP_VERSION: "0.7.6"
@@ -83,4 +83,4 @@
     - name: Reboot server in order for changes to take place
       shell: "sleep 1 && reboot"
       async: 1
-      poll: 0
+      poll: 0      
