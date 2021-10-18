@@ -5,7 +5,7 @@
 	<meta name="generator" content="LibreOffice 7.0.4.2 (Linux)"/>
 </head>
 <body lang="en-US" link="#000080" vlink="#800000" dir="ltr"><p>---------------------------------------------------------------------------------</p>
-<p>--- provisioning nodes | deploy ssh key to all nodes</p>
+<p>--- provisioning nodes | deploy ssh ed25519 public key to all nodes</p>
 <p><i>		First step:</i></p>
 <p>- add nodes/hosts</p>
 <p>example from: nano /etc/hostnames</p>
