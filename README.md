@@ -37,7 +37,7 @@ MAIN machine with:<br/>
 <p>next:</p>
 <p>- use this line below to copy the public ssh key that is stored in
 ~/.ssh/id_ed25519.pub on the MAIN machine to all the nodes via ssh by
-skipping the RSA finger print question</p>
+skipping the ECDSA finger print question</p>
 <p><b>ansible-playbook deploy_keys.yml --ask-pass -i inventory</b></p>
 <p>--- skipping the fingerprint question is made by using this:
 host_key_checking = False in ansible.cfg 
