@@ -51,7 +51,11 @@ from inventory file are hostnames which are found on MAIN machine in
 and ctop, <br/>
 it will ask for sudo password</p>
 <p><b>ansible-playbook install_doker.yml --ask-become-pass -i
-inventory</b></p>
+inventory
+	
+----------------------------------------------------------------------
+	use : ansible-playbook --ask-become-pass install_jenkins.yml
+	-- it will install jenkins server and it will show you the first time connect admin password in the ansible terminal playbook as a task </b></p>
 <p><br/>
 <br/>
 
