@@ -47,7 +47,7 @@ from inventory file are hostnames which are found on MAIN machine in
 /etc/hostnames</p>
 <p>------------------------------------------------------------------</p>
 <p><i>		Last step:</i></p>
-<p>run install_docker.yml playbook to automate instalation of docker
+<p>run install_docker.yml playbook to automate instalation of docker, docker-compose, docker hello_wolrd image
 and ctop, <br/>
 it will ask for sudo password</p>
 <p><b>ansible-playbook install_doker.yml --ask-become-pass -i
