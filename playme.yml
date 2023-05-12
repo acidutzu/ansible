@@ -10,8 +10,21 @@
 # 127.0.0.1 ansible_connection=local
 #################################
 
+# 3. make a file named ansible.cfg with the content below:
 
-# 3. run command: ansible-playbook playme.yml -i inventory.ini --ask-become-pass
+# ansible.cfg file content:
+
+################################
+#[defaults]
+# host_key_checking = False
+# # remote_user = helltala
+# interpreter_python = /usr/bin/python3
+# command_warnings=False
+# deprecation_warnings=False
+###############################
+
+
+# 4. run command: ansible-playbook playme.yml -i inventory.ini --ask-become-pass
 # --- it will ask you for the root password
 
 # dry run command: ansible-playbook playme.yml -i inventory.ini --check --diff --ask-become-pass
@@ -21,122 +34,116 @@
 # SAYONARA :)
 
 
-
-
 - name: install docker|docker-compose|kubectl|kind|helm|zip|awscli|argocdcli|kubecolor|minikube|terrafarm
   hosts: all
-  become: yes
+  become: true
+  gather_facts: yes
   vars:
-    DOCKER_COMPOSE_VER: "v2.2.2"
-    KIND_VER: "v0.18.0"
+    install_docker: true
+    install_docker_compose: true
+    add_user_to_docker_group: true
     KUBE_VER: "stable"
-    DOCKER_DEP:
-      - apt-transport-https
-      - ca-certificates
-      - curl
-      - gnupg-agent
-      - software-properties-common
-      - zip
-  
-    USER: "docker"
+    KIND_VER: "v0.18.0"
   tasks:
-    - name: Update apt packages
+    - name: Update the apt package index
       apt:
-        update_cache: "yes"
-        force_apt_get: "yes"
+        update_cache: yes
+        force_apt_get: yes
 
-    - name: Install packages needed for Docker and zip to unpack awscli
+    - name: Check if Docker is already installed
+      package_facts:
+        manager: apt
+      register: package_info
+      when: install_docker
+    - name: Check if Docker Compose is already installed
+      package_facts:
+        manager: apt
+      register: package_info
+      when: install_docker_compose
+
+    - name: Install packages to allow apt to use a repository over HTTPS
       apt:
-        name: "{{ DOCKER_DEP }}"
+        name: "{{ item }}"
         state: present
-        force_apt_get: "yes"
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg
+        - zip
+      when: install_docker or install_docker_compose
 
-    - name: Add Docker GPG apt Key
+    - name: Add Docker’s official GPG key
       apt_key:
-        url: https://download.docker.com/linux/debian/gpg
+        url: https://download.docker.com/linux/{{ ansible_distribution|lower }}/gpg
         state: present
+      when: install_docker or install_docker_compose
 
-    - name: Save the current debian release version into a variable
-      shell: lsb_release -cs
-      register: debian_version
-
-
-    - name: Add Docker Repository
+    - name: Add Docker’s APT repository
       apt_repository:
-        repo: "deb [arch=amd64] https://download.docker.com/linux/debian {{ debian_version.stdout }} stable"
+        repo: deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution|lower }} {{ ansible_distribution_release }} stable
         state: present
+      when: install_docker
+      notify:
+        - update package cache
 
-
-    - name: Add GPG Key for Terrafarm and adding to sources.list
-      shell: |
-        wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
-        echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
-
-
-
-    - name: Update apt packages
+    - name: Install Docker
       apt:
-        update_cache: "yes"
-        force_apt_get: "yes"
+        name: "{{ item }}"
+        state: present
+      loop:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+      when: install_docker and ('docker-ce' not in package_info.ansible_facts.packages)
 
-
-    - name: Install Docker latest version
+    - name: Install Docker Compose
       apt:
-        name: "docker-ce"
+        name: docker-compose
         state: present
-        force_apt_get: "yes"
+      when: install_docker_compose and ('docker-compose' not in package_info.ansible_facts.packages)
 
-
-    - name: Create docker group
-      group:
-        name: "docker"
-        state: present
-
-
-    - name: Adding user {{ USER }} to docker group
+    - name: Add system user to the Docker group
       user:
-        name: "{{ USER }}"
-        groups: "docker"
-        append: "yes"
+        name: "{{ ansible_user_id }}"
+        append: yes
+        groups: docker
+      when: add_user_to_docker_group
 
+    - name: Check if kubectl is installed
+      shell: which kubectl
+      register: kubectl_path
+      ignore_errors: true
 
-    - name: Install Docker Compose specified version
-      get_url:
-        url: https://github.com/docker/compose/releases/download/{{ DOCKER_COMPOSE_VER }}/docker-compose-Linux-x86_64
-        dest: "/usr/local/bin/docker-compose"
-        mode: 0755
-
-
-    - name: Install kubectl latest version
+    - name: Install kubectl if not present
       block:
         - name: Download kubectl
           shell: curl -LO "https://dl.k8s.io/release/{{ KUBE_VER }}/bin/linux/amd64/kubectl"
         - name: Move kubectl binary to /usr/local/bin
-          # command: sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
           command: install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-        - name: Check kubectl version
-          command: kubectl version --client
-      # when: "'kubectl' not in ansible_playbook_python"
+      when: kubectl_path.rc != 0
 
 
-
-    # - name: Install kubectl latest version
-      # shell: |
-        # curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-        # install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-
+    - name: Check if KIND is installed
+      shell: which kind
+      register: kind_path
+      ignore_errors: true
 
 
-
-
-    - name: Install Kind specified version
+    - name: Install KIND specified version
       block:
         - name: Download Kind
           get_url:
             url: "https://kind.sigs.k8s.io/dl/{{ KIND_VER }}/kind-linux-amd64"
             dest: "/usr/local/bin/kind"
             mode: 0755
-      # when: "'kind' not in ansible_playbook_python"
+      when: kind_path.rc != 0
+
+
+    - name: Check if HELM is installed
+      shell: which helm
+      register: helm_path
+      ignore_errors: true
 
 
     - name: Install HELM latest version
@@ -148,7 +155,12 @@
             mode: "u+x"    
         - name: Run Helm installer script
           command: /tmp/get_helm.sh
+      when: helm_path.rc != 0
 
+    - name: Check if aws is installed
+      shell: which aws
+      register: aws_path
+      ignore_errors: true
 
 
     - name: Install AWS CLI latest version
@@ -158,46 +170,43 @@
         - name: Unzip AWS CLI
           shell: unzip awscliv2.zip
         - name: Install AWS CLI
-          # command: sudo ./aws/install
           command: ./aws/install
+      when: aws_path.rc != 0
 
 
-    # - name: Create .aws folder in user's home directory
-      # file:
-        # path: "/home/{{ USR }}/.aws"
-        # state: directory
-        # owner: "{{ USR }}"
-        # group: "{{ USR }}"
-        # mode: "0755"
-      # when: USR != 'root'
-    # 
-    # - name: Add AWS credentials file
-      # blockinfile:
-        # path: "/home/{{ USR }}/.aws/credentials"
-        # block: |
-          # [default]
-          # aws_access_key_id = YOUR_ACCESS_KEY
-          # aws_secret_access_key = YOUR_SECRET_KEY
-        # marker: ""
-        # create: true
-        # owner: "{{ USR }}"
-        # group: "{{ USR }}"
-        # mode: "0600"
-      # when: USR != 'root'
+    - name: Check if ArgoCD CLI is installed
+      shell: which argocd
+      register: argocd_path
+      ignore_errors: true
 
-
-      
     - name: Install ArgoCD CLI latest version
       block:
         - name: Download ArgoCD CLI
           shell: curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
         - name: Move ArgoCD CLI binary to /usr/local/bin
-          # command: sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
           command: install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
         - name: Remove ArgoCD CLI binary
           file:
             path: argocd-linux-amd64
             state: absent
+      when: argocd_path.rc != 0
+
+    - name: Check if MINIKIBE is installed
+      shell: which minikube
+      register: minikube_path
+      ignore_errors: true
+
+    - name: Install MINIKUBE latest version
+      shell: |
+        curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        install minikube-linux-amd64 /usr/local/bin/minikube
+      when: minikube_path.rc != 0
+
+    - name: Check if kubecolor is installed
+      shell: which kubecolor
+      register: kubecolor_path
+      ignore_errors: true
+
 
 
     - name: Install kubecolor (to colorize your kubectl output) latest version
@@ -205,6 +214,7 @@
        name: "kubecolor"
        state: present
        force_apt_get: "yes"
+      when: kubecolor_path.rc != 0
 
     - name: Configuring the kubectl autocomplete and adding "k" alias for kubectl, colorize the output
       become: false
@@ -212,13 +222,29 @@
         echo "source <(kubectl completion bash)" >>~/.bashrc
         echo "alias k=kubecolor" >>~/.bashrc
         echo "complete -o default -F __start_kubectl kubecolor k" >>~/.bashrc
-        . ~/.bashrc
+        . ~/.bashrc      
+      when: kubecolor_path.rc != 0
 
 
-    - name: Install minikube latest version
+
+    - name: Check if terraform is installed
+      shell: which terraform
+      register: terraform_path
+      ignore_errors: true
+
+
+
+    - name: Add GPG Key for Terrafarm and adding to sources.list
       shell: |
-        curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-        install minikube-linux-amd64 /usr/local/bin/minikube
+        wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
+        echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
+      when: terraform_path.rc != 0
+
+    - name: Update the apt package index
+      apt:
+        update_cache: yes
+        force_apt_get: yes
+      when: terraform_path.rc != 0
 
 
     - name: Install Terrafarm latest version
@@ -226,6 +252,20 @@
        name: "terraform"
        state: present
        force_apt_get: "yes"
+      when: terraform_path.rc != 0
+
+
+
+  handlers:
+    - name: update package cache
+      apt:
+        update_cache: yes
+
+################################
+
+
+
+
 
 
 
