@@ -110,12 +110,23 @@
         state: present
       when: install_docker_compose and ('docker-compose' not in package_info.ansible_facts.packages)
 
+
+#does not work, it resurns root user
+    # - name: Add system user to the Docker group
+    #   user:
+    #     name: "{{ ansible_user_id }}"
+    #     append: yes
+    #     groups: docker
+    #   when: add_user_to_docker_group
+
+
     - name: Add system user to the Docker group
       user:
-        name: "{{ ansible_user_id }}"
+        name: "{{ lookup('env', 'USER') }}"
         append: yes
         groups: docker
-      when: add_user_to_docker_group
+      when: add_user_to_docker_group and ansible_user != 'root'
+
 
 ############################### 
 
