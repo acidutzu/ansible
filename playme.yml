@@ -38,17 +38,24 @@
   hosts: all
   become: true
   gather_facts: yes
+
+############################### 
   vars:
     install_docker: true
     install_docker_compose: true
     add_user_to_docker_group: true
     KUBE_VER: "stable"
     KIND_VER: "v0.18.0"
+
+############################### 
+
   tasks:
     - name: Update the apt package index
       apt:
         update_cache: yes
         force_apt_get: yes
+
+############################### 
 
     - name: Check if Docker is already installed
       package_facts:
@@ -110,6 +117,8 @@
         groups: docker
       when: add_user_to_docker_group
 
+############################### 
+
     - name: Check if kubectl is installed
       shell: which kubectl
       register: kubectl_path
@@ -123,12 +132,12 @@
           command: install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
       when: kubectl_path.rc != 0
 
+############################### 
 
     - name: Check if KIND is installed
       shell: which kind
       register: kind_path
       ignore_errors: true
-
 
     - name: Install KIND specified version
       block:
@@ -139,12 +148,12 @@
             mode: 0755
       when: kind_path.rc != 0
 
+############################### 
 
     - name: Check if HELM is installed
       shell: which helm
       register: helm_path
       ignore_errors: true
-
 
     - name: Install HELM latest version
       block:
@@ -157,11 +166,12 @@
           command: /tmp/get_helm.sh
       when: helm_path.rc != 0
 
+############################### 
+
     - name: Check if aws is installed
       shell: which aws
       register: aws_path
       ignore_errors: true
-
 
     - name: Install AWS CLI latest version
       block:
@@ -173,6 +183,7 @@
           command: ./aws/install
       when: aws_path.rc != 0
 
+############################### 
 
     - name: Check if ArgoCD CLI is installed
       shell: which argocd
@@ -191,6 +202,8 @@
             state: absent
       when: argocd_path.rc != 0
 
+############################### 
+
     - name: Check if MINIKIBE is installed
       shell: which minikube
       register: minikube_path
@@ -202,11 +215,12 @@
         install minikube-linux-amd64 /usr/local/bin/minikube
       when: minikube_path.rc != 0
 
+############################### 
+
     - name: Check if kubecolor is installed
       shell: which kubecolor
       register: kubecolor_path
       ignore_errors: true
-
 
 
     - name: Install kubecolor (to colorize your kubectl output) latest version
@@ -225,14 +239,12 @@
         . ~/.bashrc      
       when: kubecolor_path.rc != 0
 
-
+############################### 
 
     - name: Check if terraform is installed
       shell: which terraform
       register: terraform_path
       ignore_errors: true
-
-
 
     - name: Add GPG Key for Terrafarm and adding to sources.list
       shell: |
@@ -254,6 +266,7 @@
        force_apt_get: "yes"
       when: terraform_path.rc != 0
 
+############################### 
 
 
   handlers:
@@ -262,6 +275,12 @@
         update_cache: yes
 
 ################################
+############################### 
+############################### 
+############################### 
+############################### 
+############################### 
+############################### 
 
 
 
