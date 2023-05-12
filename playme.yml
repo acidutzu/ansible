@@ -43,7 +43,7 @@
   vars:
     install_docker: true
     install_docker_compose: true
-    add_user_to_docker_group: true
+    linux_user_name: debi
     KUBE_VER: "stable"
     KIND_VER: "v0.18.0"
 
@@ -122,10 +122,9 @@
 
     - name: Add system user to the Docker group
       user:
-        name: "{{ ansible_user_id }}"
+        name: "{{ linux_user_name }}"
         append: yes
         groups: docker
-      when: add_user_to_docker_group and ansible_user_id != 'root'
 
 
 
