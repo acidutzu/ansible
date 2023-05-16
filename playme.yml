@@ -121,6 +121,22 @@
 
 ############################### 
 
+    # - name: Check if kubectl is installed
+    #   command: which kubectl
+    #   register: kubectl_path
+    #   changed_when: false
+    #   failed_when: kubectl_path.rc != 0 and kubectl_path.stderr != ""
+    #   ignore_errors: true
+
+    # - name: Install kubectl if not present
+    #   block:
+    #     - name: Download kubectl
+    #       shell: curl -LO "https://dl.k8s.io/release/{{ KUBE_VER }}/bin/linux/amd64/kubectl"
+    #     - name: Move kubectl binary to /usr/local/bin
+    #       command: install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+    #   when: kubectl_path.rc != 0 and kubectl_path.stderr != ""
+
+
     - name: Check if kubectl is installed
       shell: which kubectl
       register: kubectl_path
@@ -133,6 +149,9 @@
         - name: Move kubectl binary to /usr/local/bin
           command: install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
       when: kubectl_path.rc != 0
+
+
+
 
 ############################### 
 
